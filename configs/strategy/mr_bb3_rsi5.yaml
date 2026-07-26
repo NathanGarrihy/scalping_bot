@@ -1,0 +1,23 @@
+# CANDIDATE strategy config — NOT validated. PLAN.md §10 frozen-config discipline:
+# after the Phase 0 gate passes, status flips to VALIDATED, the file is frozen, and its
+# hash is pinned in configs/live.yaml. The live engine refuses CANDIDATE configs.
+name: mr_bb3_rsi5
+status: CANDIDATE
+
+timeframe: 1s               # subject to Phase 0 selection
+bollinger:
+  period: 1200              # bars; plateau requirement applies to all params
+  sigma: 3.0
+rsi:
+  period: 5
+  overbought: 85
+  oversold: 15
+
+exits:
+  mode: bracket             # bracket | mean_revert — Phase 0 picks the winner
+  bracket:
+    take_profit_pct: 2.0
+    stop_pct: 6.0
+  mean_revert:
+    target: middle_band
+    time_stop_s: 900

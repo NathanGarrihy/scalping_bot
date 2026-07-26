@@ -1,0 +1,21 @@
+# Tokyo VPS (AWS ap-northeast-1). Install: copy to /etc/systemd/system/, then
+# systemctl daemon-reload && systemctl enable --now scalpbot scalpbot-watchdog
+[Unit]
+Description=scalpbot live engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=scalpbot
+WorkingDirectory=/opt/scalpbot
+EnvironmentFile=/opt/scalpbot/.env
+ExecStart=/usr/local/bin/uv run python -m scalpbot.live.engine --config configs/live.yaml
+Restart=on-failure
+RestartSec=5
+# hard stop after repeated crash-looping: let the watchdog flatten instead
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

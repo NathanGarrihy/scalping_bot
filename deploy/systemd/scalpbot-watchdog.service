@@ -1,0 +1,17 @@
+# Independent failure domain from scalpbot.service — never merge these units.
+[Unit]
+Description=scalpbot deadman watchdog (flattens positions if engine heartbeat stops)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=scalpbot
+WorkingDirectory=/opt/scalpbot
+EnvironmentFile=/opt/scalpbot/.env
+ExecStart=/usr/local/bin/uv run python -m scalpbot.live.watchdog --config configs/live.yaml
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

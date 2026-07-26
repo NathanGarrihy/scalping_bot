@@ -1,0 +1,32 @@
+# Live/shadow engine configuration. Null fields are set from Phase 0 artifacts —
+# the engine treats a null where a gate output belongs as a refusal to start.
+venue: hyperliquid
+network: testnet            # testnet | mainnet (mainnet only at Phase 5)
+subaccount: scalpbot
+
+strategy_config: configs/strategy/mr_bb3_rsi5.yaml
+strategy_config_hash: null  # sha256 of the frozen VALIDATED config; engine verifies at boot
+
+risk:
+  leverage: 10              # ceiling; isolated margin
+  margin_per_trade_eur: 20
+  max_concurrent_positions: 2   # correlation cap (PLAN.md Task 2.3)
+  daily_loss_halt_pct: 6.0
+  consecutive_loss_halt: null   # from Monte Carlo streak distribution (gate0_drawdown)
+  vol_halt_percentile: null     # from Phase 0 regime envelope
+
+execution:
+  order_type: alo           # add-liquidity-only: crossing orders rejected, never taker
+  chase:
+    reprice_after_s: 3
+    max_retries: 3
+    abort_after_ticks: null # from Phase 0 signal-price displacement analysis
+  stop_on_exchange_ms: 500  # position without resting stop beyond this → flatten
+
+filters:
+  spread_bps_max: 4.0
+  funding_hourly_bps_max_adverse: 2.0
+
+watchdog:
+  heartbeat_interval_s: 5
+  flatten_after_s: 30

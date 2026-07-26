@@ -1,0 +1,35 @@
+# Phase 0 research configuration. See PLAN.md §3.
+data:
+  signal_corpus:            # multi-regime signal validation (Task 0.1)
+    source: binance_archive # data.binance.vision — free regardless of EU trading access
+    interval: 1s
+    start: "2024-07-01"
+    end: "2026-06-30"
+    holdout_months: 3       # single-use holdout, quarantined until iteration stops
+  venue_corpus:             # fill/cost model calibration on the traded venue
+    source: hyperliquid_archive   # S3 hyperliquid-archive (L2 snapshots) + info API candles
+    start: "2026-01-01"
+
+universe:                   # Task 0.2 — evaluated as-of each historical date
+  volume_rank_max: 40
+  spread_bps_max: 4.0
+  listing_age_days_min: 90
+  rebalance: monthly
+
+costs:                      # VERIFY against live fee schedule before Phase 0 sign-off
+  maker_fee_bps: -0.5       # base-tier maker rebate (negative = rebate)
+  taker_fee_bps: 4.5        # only used for flatten/watchdog paths; entries are maker-only
+  funding_cadence: hourly   # Hyperliquid pays funding hourly, not per-8h
+  stop_slippage_haircut_bps_range: [30, 50]
+
+fill_model:
+  mode: trade_through       # touch does not fill; price must trade through the limit level
+
+walkforward:
+  train_months: 6
+  test_months: 2
+  embargo_days: 2           # purge/embargo gap between train and test windows
+
+montecarlo:
+  resamples: 10000
+  p95_drawdown_reject_pct: 40.0

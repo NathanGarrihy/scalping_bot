@@ -6,10 +6,13 @@ phases, and no phase's code is built until the previous phase's gate script pass
 
 ## Status
 
-**Phase 0 (edge validation) — not started.** The repo is scaffolding: real interfaces
-(`core/events.py`, `venues/base.py`, state machine), stub implementations everywhere else.
-Per the plan, infrastructure work is blocked until `gates/gate0_edge.py` and
-`gates/gate0_drawdown.py` print PASS.
+**Phase 0 (edge validation) — Task 0.1 (data acquisition) done, universe selection and the
+hostile backtest not started.** `src/scalpbot/data/` ingests the Binance signal-research
+corpus (1s bars, resampled from aggTrades — Binance USD-M futures has no native 1s klines)
+and the Hyperliquid venue-calibration corpus (1h candles via the info API) — see
+`docs/data_schema.md`. Run `uv run python scripts/data_report.py` for the integrity/regime/
+cross-venue-basis report. Per the plan, infrastructure work is still blocked until
+`gates/gate0_edge.py` and `gates/gate0_drawdown.py` print PASS — Tasks 0.2 and 0.3 are next.
 
 ## Quickstart
 

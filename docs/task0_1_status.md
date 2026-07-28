@@ -44,12 +44,20 @@ plausible in code. Task 0.2 (universe selection) and Task 0.3 (backtest engine, 
   exactly at the boundary (24 months, ~21 after the 3-month holdout carve-out) — fine for
   now, worth keeping in mind when sizing walk-forward windows later.
 
+## Task 0.3 Stage 1 (coarse screen)
+
+Moved to its own file — `docs/task0_3_status.md` — once it outgrew this one. Short
+version: three rounds of screening (1,694 total config×symbol evaluations across two
+signal families, three lookback regimes), comprehensive kill signal for the screened
+design space, universe widening (Task 0.2) built but not yet run to completion. Full
+detail, numbers, and resume path in that file.
+
 ## Scaffolding note (not a Task 0.1 item, flagged for awareness)
 
 `pyproject.toml`/`uv.lock` already pin `hyperliquid-python-sdk` and `websockets` — Phase 1
-dependencies, resolved ahead of the Phase 0 gate passing. Everything under
-`src/scalpbot/{backtest,live,venues,shadow,ops}/` is currently inert
-(`raise NotImplementedError`, each citing the PLAN.md task it's blocked on), which is fine
-as pure interface/spec work — but the dependency pins are the one place "ahead of gate" is
-already a fact on disk. Nothing to do about it now; just don't let it become the reason
-Phase 1 code gets written before this doc says Task 0.1 is closed out.
+dependencies, resolved ahead of the Phase 0 gate passing. `backtest/{engine,fills,
+walkforward,montecarlo}.py`, `core/indicators.py`, and `core/strategy.py::decide` remain
+inert stubs (`raise NotImplementedError`) — Stage 1 above deliberately doesn't depend on
+them (see `vector_screen.py`'s module docstring for why). Nothing to do about the
+dependency pins now; just don't let them become the reason Phase 1 code gets written
+before Phase 0 passes.

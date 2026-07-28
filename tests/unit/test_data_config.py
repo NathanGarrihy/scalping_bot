@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -76,6 +76,25 @@ def test_holdout_start_computed_from_end_minus_holdout_months() -> None:
 
     # 3 whole months quarantined before end (2026-06-30): April, May, June.
     assert cfg.signal_corpus.holdout_start == date(2026, 4, 1)
+
+
+def test_holdout_start_ms_matches_utc_midnight_epoch() -> None:
+    cfg = DataConfig.model_validate(
+        {
+            "signal_corpus": {
+                "source": "binance_archive",
+                "interval": "1s",
+                "start": "2024-07-01",
+                "end": "2026-06-30",
+                "holdout_months": 3,
+            },
+            "venue_corpus": {"source": "hyperliquid_archive", "start": "2026-01-01"},
+        }
+    )
+
+    # holdout_start = 2026-04-01 UTC midnight, hand-computed epoch ms.
+    expected_ms = int(datetime(2026, 4, 1, tzinfo=UTC).timestamp() * 1000)
+    assert cfg.signal_corpus.holdout_start_ms == expected_ms
 
 
 def test_holdout_start_crosses_year_boundary() -> None:

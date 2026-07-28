@@ -36,9 +36,15 @@ class StrategyConfig(BaseModel):
     bollinger: BollingerConfig
     rsi: RsiConfig
     exits: dict
+    signal_direction: str = "mean_revert"  # mean_revert | momentum — which side of a
+    # band-pierce the entry bets on. Default preserves PLAN.md's named anchor candidate
+    # (mr_bb3_rsi5.yaml) unchanged; "momentum" is Stage 1's structural contrast family
+    # (Task 0.3 §"zoom out" round) — trades with the pierce (continuation) instead of
+    # against it (reversion).
 
 
 # --- Actions: the core's entire output vocabulary -------------------------------
+
 
 @dataclass(frozen=True, slots=True)
 class PlaceMakerOrder:

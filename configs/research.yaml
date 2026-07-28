@@ -16,14 +16,44 @@ universe:                   # Task 0.2 — evaluated as-of each historical date
   listing_age_days_min: 90
   rebalance: monthly
 
-costs:                      # VERIFY against live fee schedule before Phase 0 sign-off
-  maker_fee_bps: -0.5       # base-tier maker rebate (negative = rebate)
+costs:                      # verified against hyperliquid.gitbook.io/hyperliquid-docs/trading/fees (2026-07-27)
+  maker_fee_bps: 1.5        # base-tier (Tier 0, <$5M 14d volume) maker fee — a cost, not a rebate;
+                             # rebates only start at Tier 4 (>$500M 14d volume), unreachable at this account size
   taker_fee_bps: 4.5        # only used for flatten/watchdog paths; entries are maker-only
   funding_cadence: hourly   # Hyperliquid pays funding hourly, not per-8h
   stop_slippage_haircut_bps_range: [30, 50]
 
 fill_model:
   mode: trade_through       # touch does not fill; price must trade through the limit level
+
+screen:                      # Stage 1 coarse grid (Task 0.3) — vector_screen.py consumes this.
+                              # Screening only; never cited as gate evidence (PLAN.md §3 Task 0.3).
+  timeframe: 1s
+  bollinger:
+    period: [3600, 7200, 14400] # bars = 1h/2h/4h on 1s data; widened from the original
+                                 # 600-2400 (10-40min) after that grid's 0-survivor result
+                                 # traced to over-tight bands firing on noise, not real
+                                 # 3sigma extremes — see docs/task0_1_status.md
+    sigma: [2.5, 3.0, 3.5]
+  rsi:
+    period: [5, 14, 60, 300]    # 5s/14s (PLAN.md's "fast RSI" anchor) plus 1min/5min —
+                                 # isolates whether the fast RSI leg (firing on tick noise
+                                 # regardless of the Bollinger band) independently drives
+                                 # the over-trading pattern seen in the first two rounds
+    thresholds:                 # [oversold, overbought] pairs
+      - [10, 90]
+      - [15, 85]
+      - [20, 80]
+  exits:                     # stop_pct is the hard stop / R-risk-unit in every mode —
+                              # mean_revert only replaces the take-profit logic, per PLAN.md
+                              # Task 3.2 ("a position without a resting stop... triggers a flatten")
+    - mode: bracket
+      take_profit_pct: 2.0
+      stop_pct: 6.0
+    - mode: mean_revert
+      stop_pct: 6.0
+      target: middle_band
+      time_stop_s: 7200        # 2h — matches the new hour-scale bollinger.period range
 
 walkforward:
   train_months: 6

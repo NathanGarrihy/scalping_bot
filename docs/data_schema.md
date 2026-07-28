@@ -18,7 +18,8 @@ ingested rows into `Candle` events is a future backtest-driver concern, not this
 
 - `root` defaults to `./data/` (gitignored), configurable per CLI invocation.
 - `venue` is `binance` or `hyperliquid`.
-- `kind` is `klines` (Binance) or `candles` (Hyperliquid).
+- `kind` is `klines` (Binance), `candles` (Hyperliquid price), or `funding` (Hyperliquid
+  funding-rate history).
 - `symbol` uses each venue's own native naming (see below) — no cross-venue normalization
   in the path itself.
 - One file per symbol/interval/UTC day. Day-partitioning matches Binance's own daily-zip
@@ -89,6 +90,37 @@ returns a 25th row belonging to the next day.
 | `volume` | Float64 | Volume |
 | `n_trades` | Int64 | Trade count, if the response provides it |
 | `source` | Utf8 | Constant `"hyperliquid_info_api"` |
+
+## Hyperliquid funding-rate history — `HYPERLIQUID_FUNDING_SCHEMA`
+
+Source: HL info API `fundingHistory`. One row per hourly funding event.
+
+Confirmed empirically (Task 0.3 "zoom out" round, Phase E): **unlike `candleSnapshot`,
+this is not a rolling cache** — a direct request for 2023-06-01 returns real funding
+data (2023-01-01 returns empty, consistent with pre-listing rather than a depth limit).
+It's paginated instead: a request spanning a full year returns exactly 500 records
+(~20.8 days) and needs to be windowed, not depth-truncated. A single UTC day (24 events)
+is far under that 500-record page cap, so day-by-day ingestion needs no pagination loop
+of its own — same shape as the candle pipeline's one-request-per-day pattern.
+
+Request shape is **flat** — `{"type": "fundingHistory", "coin", "startTime", "endTime"}`
+— not nested under `"req"` like `candleSnapshot` is. Easy to get wrong by copying the
+candle pipeline's request builder verbatim; confirmed against the live endpoint before
+writing `hyperliquid_funding.py`.
+
+| Column | Type | Meaning |
+| :--- | :--- | :--- |
+| `symbol` | Utf8 | HL coin name, e.g. `BTC` (no `USDT` suffix) |
+| `open_time_ms` | Int64 | Funding event time, exchange ms epoch, UTC |
+| `funding_rate` | Float64 | Hourly rate; positive = longs pay shorts |
+| `premium` | Float64 | Mark-vs-oracle premium feeding the funding calc |
+| `source` | Utf8 | Constant `"hyperliquid_info_api"` |
+
+Because this corpus isn't depth-limited, its practical start date can match the
+signal-research corpus's full window (2024-07-01+), unlike the price-candle corpus,
+which is stuck at whatever `candleSnapshot`'s rolling cache could reach at ingestion
+time. The *price* side of any funding-based signal is still bounded by that shorter
+candle window — only the funding series itself gets the longer history.
 
 ## Symbol naming
 
